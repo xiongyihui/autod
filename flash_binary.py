@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os
+from time import sleep
 import pyOCD
 from pyOCD.board import MbedBoard
 
@@ -15,6 +16,8 @@ try:
     flash = board.flash
     target= board.target
     
+    target.halt()
+
     flash.flashBinary(binary_file)
     
     target.reset()
