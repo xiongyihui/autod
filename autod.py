@@ -2,32 +2,37 @@
 
 import os
 import subprocess
-import RPi.GPIO as GPIO
 from time import sleep
 from pyudev import Context, Monitor, MonitorObserver
 
 PWD = os.path.dirname(os.path.realpath(__file__))
-DOWNLOAD_TOOL = os.path.join(PWD, 'LinuxNXPISP.sh')
-DOWNLOAD_FILE = 'test.bin'
-LED_IO = [11, 12, 15, 16]
-BLUE_LED = 12
-GREEN_LED = 16
+LPC11U35_DOWNLOAD_TOOL = os.path.join(PWD, 'LinuxNXPISP.sh')
+LPC11U35_DOWNLOAD_FILE = 'stream.bin'
+MBED_INTERFACE_TOOL = os.path.join(PWD, 'flash_binary.py')
 
-GPIO.setmode(GPIO.BOARD)
-for i in LED_IO:
-    GPIO.setup(i, GPIO.OUT)
-    GPIO.output(i, GPIO.HIGH)
+def lpc11u35_event(action):
+    if action == 'add':
+        print('lpc11u35 is found')
+        subprocess.call([LPC11U35_DOWNLOAD_TOOL, LPC11U35_DOWNLOAD_FILE])
+    elif action == 'remove':
+        print('lpc11u35 is removed')
+        
+def mbed_interface_event(action):
+    if action == 'add':
+        print('mbed interface is found')
+        subprocess.call(MBED_INTERFACE_TOOL)
+    elif action == 'remove':
+        print('mbed interface is removed')
 
 def device_event(action, device):
 
-    if device.device_type == 'disk' and device.get('ID_VENDOR_ID') == '1fc9':
-        if action == 'add':
-            print('get a device')
-            subprocess.call([DOWNLOAD_TOOL, DOWNLOAD_FILE])
-            GPIO.output(BLUE_LED, GPIO.HIGH)
-        elif action == 'remove':
-            print('device is removed')
-            GPIO.output(BLUE_LED, GPIO.LOW)
+    if device.device_type == 'disk':
+        if device.get('ID_VENDOR_ID') == '1fc9':
+            lpc11u35_event(action)
+        elif device.get('ID_VENDOR_ID') == '0d28':
+            mbed_interface_event(action)
+        
+            
         
 print('Auto download deamon')
 
@@ -41,12 +46,8 @@ observer.start()
 
 try:
     while True:
-        GPIO.ouput(GREEN_LED, GPIO.HIGH)
-        sleep(1)
-        GPIO.ouput(GREEN_LED, GPIO.LOW)
         sleep(1)
         
 except:
     print('exit')
-    GPIO.cleanup()
     observer.stop()
