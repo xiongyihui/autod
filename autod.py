@@ -2,14 +2,15 @@
 
 import os
 import subprocess
-from time import sleep
+from time import time, sleep
 from pyudev import Context, Monitor, MonitorObserver
 import RPi.GPIO as GPIO
 
 PWD = os.path.dirname(os.path.realpath(__file__))
 LPC11U35_DOWNLOAD_TOOL = os.path.join(PWD, 'LinuxNXPISP.sh')
-LPC11U35_DOWNLOAD_FILE = 'stream.bin'
-MBED_INTERFACE_TOOL = os.path.join(PWD, 'flash_binary.py')
+LPC11U35_DOWNLOAD_FILE = os.path.join(PWD, 'mbed_interface_v1.2.bin')
+MBED_DOWNLOAD_TOOL = os.path.join(PWD, 'drag-n-drop.sh')
+MBED_DOWNLOAD_FILE = os.path.join(PWD, 'arch_pro_test_v1.2.bin')
 
 
 LED_IO = [7, 8, 11, 12, 15, 16]
@@ -25,9 +26,12 @@ for i in LED_IO:
 red_led = GPIO.PWM(RED_LED, 10)
 blue_led = GPIO.PWM(BLUE_LED, 10)
 
+mbed_remove_time = 0
+
 def lpc11u35_event(action):
     global blue_led
     global red_led
+    global mbed_remove_time
 
     if action == 'add':
         print('lpc11u35 is found')
@@ -39,6 +43,7 @@ def lpc11u35_event(action):
         except Exception as e:
             blue_led.ChangeFrequency(1)
     elif action == 'remove':
+        
         print('lpc11u35 is removed')
         blue_led.ChangeDutyCycle(0)
         
@@ -46,13 +51,20 @@ def mbed_interface_event(action):
     if action == 'add':
         print('mbed interface is found')
         red_led.ChangeFrequency(10)
-        red_led.start(50)
-        try:
-            subprocess.call(MBED_INTERFACE_TOOL)
+        print("time interval: %d" % (current_time - mbed_remove_time))
+        if ((current_time - mbed_remove_time) > 16):
+            try:
+                print('start to download test program')
+                subprocess.call([MBED_DOWNLOAD_TOOL, MBED_DOWNLOAD_FILE])
+                print('done')
+            except Exception as e:
+                print(e)
+                red_led.ChangeFrequency(1)
+        else:
+            print('mbed auto reconnect')
             red_led.ChangeDutyCycle(100)
-        except Exception as e:
-            red_led.ChangeFrequency(1)
     elif action == 'remove':
+        mbed_remove_time = time()
         print('mbed interface is removed')
         red_led.ChangeDutyCycle(0)
 
