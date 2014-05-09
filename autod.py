@@ -41,12 +41,13 @@ observer.start()
 
 try:
     while True:
-        GPIO.ouput(GREEN_LED, GPIO.HIGH)
+        GPIO.output(GREEN_LED, GPIO.HIGH)
         sleep(1)
-        GPIO.ouput(GREEN_LED, GPIO.LOW)
+        GPIO.output(GREEN_LED, GPIO.LOW)
         sleep(1)
         
-except:
+except Exception as e:
+    print(e)
     print('exit')
     GPIO.cleanup()
     observer.stop()
