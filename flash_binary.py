@@ -5,7 +5,7 @@ import pyOCD
 from pyOCD.board import MbedBoard
 
 PWD = os.path.dirname(os.path.realpath(__file__))
-binary_file = os.path.join(PWD, 'blink.bin')
+binary_file = os.path.join(PWD, 'arch_pro_test_v1.1.bin')
 
 board = None
 
