@@ -14,14 +14,14 @@ MBED_DOWNLOAD_FILE = os.path.join(PWD, 'arch_pro_test_v1.2.bin')
 
 
 LED_IO = [7, 8, 11, 12, 15, 16]
-RED_LED = 8
-BLUE_LED = 12
+RED_LED = 7
+BLUE_LED = 11
 GREEN_LED = 15
 
 GPIO.setmode(GPIO.BOARD)
 for i in LED_IO:
     GPIO.setup(i, GPIO.OUT)
-    GPIO.output(i, GPIO.HIGH)    
+    GPIO.output(i, GPIO.LOW)    
 
 red_led = GPIO.PWM(RED_LED, 10)
 blue_led = GPIO.PWM(BLUE_LED, 10)
@@ -30,8 +30,6 @@ mbed_remove_time = 0
 
 def lpc11u35_event(action):
     global blue_led
-    global red_led
-    global mbed_remove_time
 
     if action == 'add':
         print('lpc11u35 is found')
@@ -48,16 +46,23 @@ def lpc11u35_event(action):
         blue_led.ChangeDutyCycle(0)
         
 def mbed_interface_event(action):
+    global red_led
+    global mbed_remove_time
+
     if action == 'add':
         print('mbed interface is found')
         red_led.ChangeFrequency(10)
+        current_time = time()
         print("time interval: %d" % (current_time - mbed_remove_time))
-        if ((current_time - mbed_remove_time) > 16):
+        if ((current_time - mbed_remove_time) > 4):
+            red_led.start(50)
             try:
                 print('start to download test program')
                 subprocess.call([MBED_DOWNLOAD_TOOL, MBED_DOWNLOAD_FILE])
+                red_led.ChangeDutyCycle(100)
                 print('done')
             except Exception as e:
+                red_led.ChangeFrequency(1)
                 print(e)
                 red_led.ChangeFrequency(1)
         else:
